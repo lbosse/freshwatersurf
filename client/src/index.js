@@ -5,45 +5,23 @@ import luke from './lukeBig.jpg';
 import loading from './loading.jpg';
 
 function Navigator(props) {
-    // React-boostrap stuff
-    if (props.auth == true) {
-        return (
-            <Navbar collapseOnSelect>
-            <Navbar.Header>
-            <Navbar.Brand>
-            freshwatersurf
-            </Navbar.Brand>
-            <Navbar.Toggle />
-            </Navbar.Header>
-            <Navbar.Collapse>
-            <Nav pullRight>
-            <NavItem onClick={props.switchGrid}>Home</NavItem>
-            <NavItem onClick={props.switchContact}>Contact</NavItem>
-            <NavItem onClick={props.switchSignin}>Sign In</NavItem>
-            </Nav>
-            </Navbar.Collapse>
-            </Navbar>
-        );
-    }
-    else {
-        return (
-            <Navbar collapseOnSelect>
-            <Navbar.Header>
-            <Navbar.Brand>
-            freshwatersurf
-            </Navbar.Brand>
-            <Navbar.Toggle />
-            </Navbar.Header>
-            <Navbar.Collapse>
-            <Nav pullRight>
-            <NavItem onClick={props.switchGrid}>Home</NavItem>
-            <NavItem onClick={props.switchContact}>Contact</NavItem>
-            <NavItem onClick={props.switchSignin}>Sign In</NavItem>
-            </Nav>
-            </Navbar.Collapse>
-            </Navbar>
-        );
-    }
+    return (
+        <Navbar collapseOnSelect>
+        <Navbar.Header>
+        <Navbar.Brand>
+        freshwatersurf
+        </Navbar.Brand>
+        <Navbar.Toggle />
+        </Navbar.Header>
+        <Navbar.Collapse>
+        <Nav pullRight>
+        <NavItem onClick={props.switchGrid}>Home</NavItem>
+        <NavItem onClick={props.switchContact}>Contact</NavItem>
+        <NavItem onClick={props.switchSignin}>Sign In</NavItem>
+        </Nav>
+        </Navbar.Collapse>
+        </Navbar>
+    );
 }
 
 class SpotGrid extends React.Component {
@@ -75,7 +53,7 @@ class SpotGrid extends React.Component {
         });
     }
     */
-    
+
 
                     render() {
                         const spots = ['Boise Whitewater Park','Bend Greenwave','Lochsa Pipeline'];
@@ -213,48 +191,6 @@ class SigninForm extends React.Component {
             password: '',
         }
         this.handleChange = this.handleChange.bind(this);
-        this.handleSigninSubmit = this.handleSigninSubmit.bind(this);
-        this.handleLoginSubmit = this.handleLoginSubmit.bind(this);
-    }
-
-    handleSigninSubmit(submit) {
-        console.log('called submit handler');
-        var myInit = {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-         'Accept': 'application/json',
-         'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-         username: this.state.username,
-         password: this.state.password,
-        }),
-        };
-        fetch('/signup',myInit).then((res) => {
-            console.log(res.username);
-        });
-        submit.preventDefault();
-    }
-    
-    handleLoginSubmit(submit) {
-        console.log('called submit handler');
-        var myInit = {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-         'Accept': 'application/json',
-         'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-         username: this.state.username,
-         password: this.state.password,
-        }),
-        };
-        fetch('/login',myInit).then((res) => {
-            console.log(res.username);
-        });
-        submit.preventDefault(); 
     }
 
     handleChange(event) {
@@ -311,6 +247,33 @@ class SigninForm extends React.Component {
                 </Button>
         }
     }
+}
+
+class CreateAccountForm extends SigninForm {
+    constructor() {
+        super();
+        this.handleSigninSubmit = this.handleSigninSubmit.bind(this);
+    }
+
+    handleSigninSubmit(submit) {
+        console.log('called submit handler');
+        var myInit = {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: this.state.username,
+                password: this.state.password,
+            }),
+        };
+        fetch('/signup',myInit).then((res) => {
+            console.log(res.username);
+        });
+        submit.preventDefault();
+    }
 
     render() {
         let submitButton = this.generateSubmitButton();
@@ -366,7 +329,41 @@ class SigninForm extends React.Component {
             </Col>
             </FormGroup>
             </Form>
+            </div>
+        );
+    }
+}
 
+class LoginForm extends SigninForm {
+    constructor() {
+        super();
+        this.handleLoginSubmit = this.handleLoginSubmit.bind(this);
+    }
+
+    handleLoginSubmit(submit) {
+        console.log('called submit handler');
+        var myInit = {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: this.state.username,
+                password: this.state.password,
+            }),
+        };
+        fetch('/login',myInit).then((req) => {
+            console.log(req.user);
+        });
+        submit.preventDefault(); 
+    }
+
+    render() {
+        let submitButton = this.generateSubmitButton();
+        return (
+            <div className="signinFormContainer">
             <div className="formHeader">
             <h1>Already have an account? Login here:</h1>
             </div>
@@ -418,7 +415,6 @@ class SigninForm extends React.Component {
             </FormGroup>
             </Form>
             </div>
-
         );
     }
 }
@@ -435,10 +431,15 @@ class App extends React.Component {
     constructor() {
         super();
         this.state = {
-            authenticated: false, // EXTREMELY INSECURE. NEED TO VALIDATE USER
-            //NAME AND PASSWORD EVERY TIME TRY TO ACCESS CONTACT
+            username: null,
+            password: null,
             currentView: 'grid',
         }
+    }
+
+    login(myUsername,myPassword) {
+        this.setState({username: myUsername, password: myPassword});
+        return this;
     }
 
     switchGrid() {
@@ -461,7 +462,6 @@ class App extends React.Component {
                 return (
                     <div className="appContainer">
                     <Navigator
-                    auth={authenticated}
                     switchGrid={() => this.switchGrid()}
                     switchContact={() => this.switchContact()}
                     switchSignin={() => this.switchSignin()}
@@ -474,7 +474,6 @@ class App extends React.Component {
                 return (
                     <div className="appContainer">
                     <Navigator
-                    auth={authenticated}
                     switchGrid={() => this.switchGrid()}
                     switchContact={() => this.switchContact()}
                     switchSignin={() => this.switchSignin()}
@@ -487,12 +486,14 @@ class App extends React.Component {
                 return (
                     <div className="appContainer">
                     <Navigator
-                    auth={authenticated}
                     switchGrid={() => this.switchGrid()}
                     switchContact={() => this.switchContact()}
                     switchSignin={() => this.switchSignin()}
                     />
-                    <SigninForm/>
+                    <div className="signinFormContainer">
+                    <CreateAccountForm login={() => this.login()}/>
+                    <LoginForm login={() => this.login()}/>
+                    </div>
                     </div>
                 );
                 break;
@@ -500,7 +501,6 @@ class App extends React.Component {
                 return (
                     <div className="appContainer">
                     <Navigator
-                    auth={authenticated}
                     switchGrid={() => this.switchGrid()}
                     switchContact={() => this.switchContact()}
                     switchSignin={() => this.switchSignin()}
