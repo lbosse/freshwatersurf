@@ -2,7 +2,7 @@
   "name": "freshwatersurf",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://localhost:8080/",
+  "proxy": "http://localhost:8080",
   "dependencies": {
     "bootstrap": "3",
     "react": "^16.0.0",

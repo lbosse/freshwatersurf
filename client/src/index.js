@@ -341,10 +341,8 @@ class LoginForm extends SigninForm {
     }
 
     handleLoginSubmit(submit) {
-        console.log('called submit handler');
         var myInit = {
             method: 'POST',
-            credentials: 'include',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
@@ -354,8 +352,11 @@ class LoginForm extends SigninForm {
                 password: this.state.password,
             }),
         };
-        fetch('/login',myInit).then((req) => {
-            console.log(req.user);
+        fetch('/login',myInit).then((response) => {
+            console.log('response status: '+response.statusText);
+            return response.json();
+        }).then((data) => {
+            console.log(data);
         });
         submit.preventDefault(); 
     }
