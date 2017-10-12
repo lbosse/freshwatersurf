@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {Navbar,Nav,NavItem,Modal,Form,FormGroup,FormControl,ControlLabel,HelpBlock,Button,Label,Panel,Grid,Row,Col,Image,Thumbnail} from 'react-bootstrap';
+import {Alert,Navbar,Nav,NavItem,PageHeader,Form,FormGroup,FormControl,ControlLabel,HelpBlock,Button,Label,Panel,Grid,Row,Col,Image,Thumbnail} from 'react-bootstrap';
 import luke from './lukeBig.jpg';
 import loading from './loading.jpg';
 
@@ -152,7 +152,7 @@ class SuggestionForm extends React.Component {
             );
         }
         else {
-            <Button bsStyle="primary" disabled="true">
+            <Button bsStyle="primary" disabled>
                 Submit
                 </Button>
         }
@@ -189,6 +189,7 @@ class SigninForm extends React.Component {
         this.state = {
             username: '',
             password: '',
+            message: '',
         }
         this.handleChange = this.handleChange.bind(this);
     }
@@ -197,13 +198,15 @@ class SigninForm extends React.Component {
         const target = event.target;
         const value = target.value;
         const name = target.name;
-        this.setState({ [name]: value });
+        this.setState({ [name]: value, message : '' });
     }
 
     isValidUsername() {
         const username = this.state.username;
+        let unameMsgOne = 'That username is already taken!';
+        let unameMsgTwo = "Oops, looks like you don't have an account!";
         let usernameRegex = /^([A-Z0-9_\-]{5,30})$/i;
-        if (usernameRegex.test(username)) {
+        if (usernameRegex.test(username)&&this.state.message!=unameMsgOne&&this.state.message!=unameMsgTwo) {
             return 'success';
         }
         else {
@@ -213,8 +216,9 @@ class SigninForm extends React.Component {
 
     isValidPassword() {
         const password = this.state.password;
+        let pwordMsg = 'That was the wrong password!';
         let passwordRegex = /^([A-Z0-9@*#!_]{8,15})$/i;
-        if (passwordRegex.test(password)) {
+        if (passwordRegex.test(password)&&this.state.message!=pwordMsg) {
             return 'success';
         }
         else {
@@ -247,6 +251,21 @@ class SigninForm extends React.Component {
                 </Button>
         }
     }
+
+    generateMessage() {
+        if (this.state.message != '') {
+            return (
+                <Alert bsStyle="danger">
+                {this.state.message}
+                </Alert>
+            );
+        }
+        else {
+            return (
+                <span></span>
+            );
+        }
+    }
 }
 
 class CreateAccountForm extends SigninForm {
@@ -269,18 +288,34 @@ class CreateAccountForm extends SigninForm {
                 password: this.state.password,
             }),
         };
-        fetch('/signup',myInit).then((res) => {
-            console.log(res.username);
+        fetch('/signup',myInit).then((response) => {
+            console.log('response status: '+response.statusText);
+            return response.json();
+        }).then((data) => {
+            console.log(data);
+            if (data.authenticated === true) {
+                this.props.login(this.state.username,this.state.password);
+                this.props.switchGrid();
+            }
+            else {
+                if (data.message != '') {
+                    this.setState({message: data.message});
+                }
+                else {
+                    this.setState({message: 'Something went wrong!!'});
+                }
+            }
         });
         submit.preventDefault();
     }
 
     render() {
         let submitButton = this.generateSubmitButton();
+        let messagePanel = this.generateMessage();
         return (
             <div className="signinFormContainer">
             <div className="formHeader">
-            <h1>Create an account:</h1>
+            <PageHeader>Create an account:</PageHeader>
             </div>
             <Form onSubmit={this.handleSigninSubmit} horizontal>
             <FormGroup 
@@ -328,6 +363,7 @@ class CreateAccountForm extends SigninForm {
             {submitButton}
             </Col>
             </FormGroup>
+            {messagePanel}
             </Form>
             </div>
         );
@@ -357,16 +393,34 @@ class LoginForm extends SigninForm {
             return response.json();
         }).then((data) => {
             console.log(data);
+            if (data.authenticated === true) {
+                console.log('data authenticated "if" entered');
+                console.log('form username: '+this.state.username);
+                console.log('form password: '+this.state.password);
+                let username = this.state.username;
+                let password = this.state.password;
+                this.props.login(username,password);
+                this.props.switchGrid();
+            }
+            else {
+                if (data.message != '') {
+                    this.setState({message: data.message});
+                }
+                else {
+                    this.setState({message: 'Something went wrong!!'});
+                }
+            }
         });
         submit.preventDefault(); 
     }
 
     render() {
         let submitButton = this.generateSubmitButton();
+        let messagePanel = this.generateMessage();
         return (
             <div className="signinFormContainer">
             <div className="formHeader">
-            <h1>Already have an account? Login here:</h1>
+            <PageHeader>Already have an account? Login here:</PageHeader>
             </div>
             <Form onSubmit={this.handleLoginSubmit} horizontal>
             <FormGroup 
@@ -414,17 +468,26 @@ class LoginForm extends SigninForm {
             {submitButton}
             </Col>
             </FormGroup>
+            {messagePanel}
             </Form>
             </div>
         );
     }
 }
 
+function PleaseLogIn(props) {
+    return (
+        <PageHeader>
+        Please <a onClick={props.switchSignIn}>Log In</a>
+        </PageHeader>
+    );
+}
+
 function AppError() {
     return (
-        <h1>
+        <PageHeader>
         <Label bsStyle="danger">Oops, something went wrong!!</Label>
-        </h1>
+        </PageHeader>
     );
 }
 
@@ -432,13 +495,17 @@ class App extends React.Component {
     constructor() {
         super();
         this.state = {
-            username: null,
-            password: null,
+            username: '',
+            password: '',
             currentView: 'grid',
         }
+        this.login = this.login.bind(this);
     }
 
     login(myUsername,myPassword) {
+        console.log('login called!');
+        console.log('username: '+myUsername);
+        console.log('password: '+myPassword);
         this.setState({username: myUsername, password: myPassword});
         return this;
     }
@@ -472,6 +539,7 @@ class App extends React.Component {
                 );
                 break;
             case 'contact':
+                if (this.state.username!='') {
                 return (
                     <div className="appContainer">
                     <Navigator
@@ -482,6 +550,19 @@ class App extends React.Component {
                     <Contact/>
                     </div>
                 );
+                }
+                else {
+                return (
+                    <div className="appContainer">
+                    <Navigator
+                    switchGrid={() => this.switchGrid()}
+                    switchContact={() => this.switchContact()}
+                    switchSignin={() => this.switchSignin()}
+                    />
+                    <PleaseLogIn switchSignIn={() => this.switchSignin()}/>
+                    </div>
+                );
+                }
                 break;
             case 'signin':
                 return (
@@ -492,8 +573,14 @@ class App extends React.Component {
                     switchSignin={() => this.switchSignin()}
                     />
                     <div className="signinFormContainer">
-                    <CreateAccountForm login={() => this.login()}/>
-                    <LoginForm login={() => this.login()}/>
+                    <CreateAccountForm 
+                    switchGrid={() => this.switchGrid()}
+                    login={this.login}
+                    />
+                    <LoginForm 
+                    switchGrid={() => this.switchGrid()}
+                    login={this.login}
+                    />
                     </div>
                     </div>
                 );
