@@ -60,7 +60,7 @@ class SpotGrid extends React.Component {
     }
 
     fetchWeather() {
-        const urls = ['http://api.openweathermap.org/data/2.5/weather?id=5586437&APPID=d70d2ea5c94b82c4047361fe3aee43d7','http://api.openweathermap.org/data/2.5/weather?id=5599665&APPID=d70d2ea5c94b82c4047361fe3aee43d7','http://api.openweathermap.org/data/2.5/weather?id=5828648&APPID=d70d2ea5c94b82c4047361fe3aee43d7'];
+        const urls = ['https://api.openweathermap.org/data/2.5/weather?id=5586437&APPID=d70d2ea5c94b82c4047361fe3aee43d7','https://api.openweathermap.org/data/2.5/weather?id=5599665&APPID=d70d2ea5c94b82c4047361fe3aee43d7','https://api.openweathermap.org/data/2.5/weather?id=5828648&APPID=d70d2ea5c94b82c4047361fe3aee43d7'];
         const myInit = { method: 'GET',
         };
         return urls.map((url,index) => {
