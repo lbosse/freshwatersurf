@@ -30,12 +30,18 @@ class SpotGrid extends React.Component {
         this.state = {
             isLoading: true,
             cfs: [null,null,null],
+            weather: [null,null,null],
+            temp: [null,null,null],
         }
     }
-    /* 
+     
     componentDidMount() {
+        this.fetchCfs();
+        this.fetchWeather()
+    }
+
+    fetchCfs() {
         const urls = ['https://waterservices.usgs.gov/nwis/iv/?site=13206000&format=json,1.1','https://waterservices.usgs.gov/nwis/iv/?site=13337000&format=json,1.1','https://waterservices.usgs.gov/nwis/iv/?site=13022500&format=json,1.1'];
-    //const urls = ['http://localhost:8000/api','http://localhost:8000/api','http://localhost:8000/api'];
         const myInit = { method: 'GET',
         };
         return urls.map((url,index) => {
@@ -44,7 +50,7 @@ class SpotGrid extends React.Component {
                 .then((responseJson) => {
                     const newCfs = this.state.cfs;
                     newCfs[index] = responseJson['value']['timeSeries'][0]['values'][0]['value'][0]['value'];
-                    this.setState({isLoading: false,cfs: newCfs});
+                    this.setState({cfs: newCfs});
                     //console.log(this.state.cfs);
                 })
                 .catch((error) => {
@@ -52,12 +58,37 @@ class SpotGrid extends React.Component {
                 });
         });
     }
-    */
 
+    fetchWeather() {
+        const urls = ['http://api.openweathermap.org/data/2.5/weather?id=5586437&APPID=d70d2ea5c94b82c4047361fe3aee43d7','http://api.openweathermap.org/data/2.5/weather?id=5599665&APPID=d70d2ea5c94b82c4047361fe3aee43d7','http://api.openweathermap.org/data/2.5/weather?id=5828648&APPID=d70d2ea5c94b82c4047361fe3aee43d7'];
+        const myInit = { method: 'GET',
+        };
+        return urls.map((url,index) => {
+            fetch(url,myInit)
+                .then((response) => response.json())
+                .then((responseJson) => {
+                    const newWeather = this.state.weather;
+                    const newTemp = this.state.temp;
+                    newWeather[index] = responseJson['weather'][0]['description'];
+                    newTemp[index] += responseJson['main']['temp'];
+                    this.setState({isLoading: false,weather: newWeather});
+                    //console.log(this.state.cfs);
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        });
+    }
+
+    kToF(temp) {
+        return Math.round(((Number(temp) - 273.15) * 1.8) + 32);
+    }
 
                     render() {
-                        const spots = ['Boise Whitewater Park','Bend Greenwave','Lochsa Pipeline'];
+                        const spots = ['Boise Whitewater Park','Lochsa Pipeline','Lunchcounter'];
                         const cfs = this.state.cfs;
+                        const weather = this.state.weather;
+                        const temp = this.state.temp;
                         if (this.state.isLoading) {
                             return (<Image src={loading} responsive />);
                         }
@@ -67,17 +98,26 @@ class SpotGrid extends React.Component {
                                 <Row>
                                 <Col xs={6} md={4}>
                                 <SessionSquare sampleImage={luke}
-                                surfSpot={spots[0]} cfs={cfs[0]+' cfs'}
+                                surfSpot={spots[0]} 
+                                cfs={cfs[0]+' cfs'}
+                                weather={weather[0]}
+                                temp={this.kToF(temp[0])}
                                 />
                                 </Col>
                                 <Col xs={6} md={4}>
                                 <SessionSquare sampleImage={luke}
-                                surfSpot={spots[1]} cfs={cfs[1]+' cfs'}
+                                surfSpot={spots[1]} 
+                                cfs={cfs[1]+' cfs'}
+                                weather={weather[1]}
+                                temp={this.kToF(temp[1])}
                                 />
                                 </Col>
                                 <Col xs={6} md={4}>
                                 <SessionSquare sampleImage={luke}
-                                surfSpot={spots[2]} cfs={cfs[2]+' cfs'}
+                                surfSpot={spots[2]} 
+                                cfs={cfs[2]+' cfs'}
+                                weather={weather[2]}
+                                temp={this.kToF(temp[2])}
                                 />
                                 </Col> 
                                 </Row>
@@ -92,6 +132,7 @@ function SessionSquare(props) {
         <Thumbnail src={props.sampleImage}>
         <h3>{props.surfSpot}</h3>
         <p>{props.cfs}</p>
+        <p>{props.weather+', '+props.temp}&#x2109;</p>
         </Thumbnail>
     );
 }
