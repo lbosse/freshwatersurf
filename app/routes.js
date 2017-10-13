@@ -59,30 +59,55 @@ module.exports = function(app, passport) {
             });
         })(req, res, next);
     });
-        /*
-    app.post('/signup', passport.authenticate('local-signup', {
-        successRedirect : '/',
-        failureRedirect : '/',
-        failureFlash : true // allow flash messages
-    }));
+
+    var Post = require('./models/post');
+    // =====================================
+    // POST SUGGESTION =====================
+    // =====================================
+    app.post('/post', function (req,res,next) {
+        console.log('post endpoint hit');
+        console.log('username: '+req.body.username);
+        console.log('content: '+req.body.content);
+        var post = new Post({
+        username: req.body.username,
+        content: req.body.content,
+        date: req.body.date
+        });
+        post.save(function (err, post) {
+        if (err) { return next(err); }
+        console.log(post);
+        res.json(201, post);
+        });
+    });
+
+    // =====================================
+    // GET SUGGESTIONS =====================
+    // =====================================
+    app.get('/posts', function (req,res,next) {
+        var posts = Post.find(function (err, posts) {
+            console.log(posts);
+            res.json(200,posts);
+        });
+    });
+
+    /*
+    // =====================================
+    // LOGOUT ==============================
+    // =====================================
+    app.get('/logout', function(req, res) {
+        req.logout();
+        res.redirect('/');
+    });
     */
 
-        // =====================================
-        // LOGOUT ==============================
-        // =====================================
-        app.get('/logout', function(req, res) {
-            req.logout();
-            res.redirect('/');
-        });
+    // route middleware to make sure a user is logged in
+    function isLoggedIn(req, res, next) {
 
-        // route middleware to make sure a user is logged in
-        function isLoggedIn(req, res, next) {
+        // if user is authenticated in the session, carry on 
+        if (req.isAuthenticated())
+            return next();
 
-            // if user is authenticated in the session, carry on 
-            if (req.isAuthenticated())
-                return next();
-
-            // if they aren't redirect them to the home page
-            res.redirect('/');
-        }
+        // if they aren't redirect them to the home page
+        res.redirect('/');
+    }
 }

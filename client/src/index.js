@@ -15,9 +15,14 @@ function Navigator(props) {
         </Navbar.Header>
         <Navbar.Collapse>
         <Nav pullRight>
-        <NavItem onClick={props.switchGrid}>Home</NavItem>
-        <NavItem onClick={props.switchContact}>Contact</NavItem>
-        <NavItem onClick={props.switchSignin}>Sign In</NavItem>
+        <NavItem 
+        onClick={props.switchGrid}><span className={props.homeActive}> Home
+        </span>
+        </NavItem>
+        <NavItem 
+        onClick={props.switchContact}>Contact</NavItem>
+        <NavItem 
+        onClick={props.switchSignin}>Sign In</NavItem>
         </Nav>
         </Navbar.Collapse>
         </Navbar>
@@ -34,7 +39,7 @@ class SpotGrid extends React.Component {
             temp: [null,null,null],
         }
     }
-     
+
     componentDidMount() {
         this.fetchCfs();
         this.fetchWeather()
@@ -84,47 +89,47 @@ class SpotGrid extends React.Component {
         return Math.round(((Number(temp) - 273.15) * 1.8) + 32);
     }
 
-                    render() {
-                        const spots = ['Boise Whitewater Park','Lochsa Pipeline','Lunchcounter'];
-                        const cfs = this.state.cfs;
-                        const weather = this.state.weather;
-                        const temp = this.state.temp;
-                        if (this.state.isLoading) {
-                            return (<Image src={loading} responsive />);
-                        }
-                        else {
-                            return (
-                                <Grid>
-                                <Row>
-                                <Col xs={6} md={4}>
-                                <SessionSquare sampleImage={luke}
-                                surfSpot={spots[0]} 
-                                cfs={cfs[0]+' cfs'}
-                                weather={weather[0]}
-                                temp={this.kToF(temp[0])}
-                                />
-                                </Col>
-                                <Col xs={6} md={4}>
-                                <SessionSquare sampleImage={luke}
-                                surfSpot={spots[1]} 
-                                cfs={cfs[1]+' cfs'}
-                                weather={weather[1]}
-                                temp={this.kToF(temp[1])}
-                                />
-                                </Col>
-                                <Col xs={6} md={4}>
-                                <SessionSquare sampleImage={luke}
-                                surfSpot={spots[2]} 
-                                cfs={cfs[2]+' cfs'}
-                                weather={weather[2]}
-                                temp={this.kToF(temp[2])}
-                                />
-                                </Col> 
-                                </Row>
-                                </Grid>
-                            );
-                        }
-                    }
+    render() {
+        const spots = ['Boise Whitewater Park','Lochsa Pipeline','Lunchcounter'];
+        const cfs = this.state.cfs;
+        const weather = this.state.weather;
+        const temp = this.state.temp;
+        if (this.state.isLoading) {
+            return (<Image src={loading} responsive />);
+        }
+        else {
+            return (
+                <Grid>
+                <Row>
+                <Col xs={6} md={4}>
+                <SessionSquare sampleImage={luke}
+                surfSpot={spots[0]} 
+                cfs={cfs[0]+' cfs'}
+                weather={weather[0]}
+                temp={this.kToF(temp[0])}
+                />
+                </Col>
+                <Col xs={6} md={4}>
+                <SessionSquare sampleImage={luke}
+                surfSpot={spots[1]} 
+                cfs={cfs[1]+' cfs'}
+                weather={weather[1]}
+                temp={this.kToF(temp[1])}
+                />
+                </Col>
+                <Col xs={6} md={4}>
+                <SessionSquare sampleImage={luke}
+                surfSpot={spots[2]} 
+                cfs={cfs[2]+' cfs'}
+                weather={weather[2]}
+                temp={this.kToF(temp[2])}
+                />
+                </Col> 
+                </Row>
+                </Grid>
+            );
+        }
+    }
 }
 
 function SessionSquare(props) {
@@ -141,27 +146,82 @@ class Contact extends React.Component {
     constructor() {
         super();
         this.state = {
-            posts: [{username: 'lbosse', content: 'this is a test'},{username: 'gbraiser', content: 'this is also a test'}],
+            authenticated: false,
+            posts: [],
         }
+        this.listUpdate = this.listUpdate.bind(this);
+    }
+
+    listUpdate(newPost) {
+        let myPosts = this.state.posts;
+        myPosts.push(newPost);
+        console.log('updated posts:');
+        console.log(myPosts);
+        this.setState({ posts : myPosts});
+    }
+
+    componentDidMount() {
+        var myInitOne = {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: this.props.username,
+                password: this.props.password,
+            }),
+        };
+        var myInitTwo = {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        };
+        fetch('/login',myInitOne).then((response) => {
+            console.log('Contact verify response status: '+response.statusText);
+            return response.json();
+        }).then((data) => {
+            if (data.authenticated == true) {
+                this.setState({authenticated: true});
+            }
+        }).then(fetch('/posts',myInitTwo).then((response) => {
+            console.log('FETCH POSTS CALLED'); 
+            console.log('Posts get response status: '+response.statusText);
+            return response.json();
+        }).then((data) => {
+            console.log(data);
+            this.setState({ posts : data});
+        }));
     }
 
     render() {
         let posts = this.state.posts;
-        const postList = posts.map((post) => {
+        let username = this.props.username;
+        if (this.state.authenticated == true) {
+            const postList = posts.map((post) => {
+                return (
+                    <Panel header={post.username+'; '+post.date}>
+                    {post.content}
+                    </Panel>
+                );
+            });
             return (
-                <Panel header={post.username}>
-                {post.content}
-                </Panel>
+                <div className="contactContainer">
+                <div className="postsContainer">
+                {postList}
+                </div>
+                <SuggestionForm username={username}
+                update={this.listUpdate}
+                />
+                </div>
             );
-        });
-        return (
-            <div className="contactContainer">
-            <div className="postsContainer">
-            {postList}
-            </div>
-            <SuggestionForm/>
-            </div>
-        );
+        }
+        else {
+            return (
+                <PleaseLogIn switchSignin={this.props.switchSignin}/>
+            );
+        }
     }
 }
 
@@ -172,6 +232,7 @@ class SuggestionForm extends React.Component {
             content: '',
         }
         this.handleChange = this.handleChange.bind(this);
+        this.handlePostSubmit = this.handlePostSubmit.bind(this);
     }
 
     isValidSubmission() {
@@ -187,7 +248,7 @@ class SuggestionForm extends React.Component {
     generateSubmitButton() {
         if (this.isValidSubmission()) {
             return (
-                <Button bsStyle="primary">
+                <Button bsStyle="primary" type="submit">
                 Submit
                 </Button>
             );
@@ -199,6 +260,33 @@ class SuggestionForm extends React.Component {
         }
     }
 
+    handlePostSubmit(submit) {
+        console.log('handlePostSubmit called');
+        let now = new Date();
+        let postDate = now.getHours()+':'+now.getMinutes()+' '+now.getMonth()+' '+now.getDay()+', '+now.getYear();
+        var myInit = {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: this.props.username,
+                content : this.state.content,
+                date    : postDate
+            }),
+        };
+        fetch('/post',myInit).then((response) => {
+            console.log('Sug. response status: '+response.statusText);
+            return response.json();
+        }).then((data) => {
+            console.log('username: '+data.username);
+            console.log('content: '+data.content);
+            this.props.update(data);
+        });
+        submit.preventDefault();
+    }
+
     handleChange(event) {
         this.setState({ content: event.target.value });
     }
@@ -206,7 +294,7 @@ class SuggestionForm extends React.Component {
     render() {
         const submitButton = this.generateSubmitButton();
         return (
-            <Form>
+            <Form onSubmit={this.handlePostSubmit}>
             <FormGroup
             controlId="formControlsTextArea"
             >
@@ -519,7 +607,7 @@ class LoginForm extends SigninForm {
 function PleaseLogIn(props) {
     return (
         <PageHeader>
-        Please <a onClick={props.switchSignIn}>Log In</a>
+        Please <a onClick={props.switchSignin}>Log In</a>
         </PageHeader>
     );
 }
@@ -563,24 +651,39 @@ class App extends React.Component {
         this.setState({currentView: 'signin',});
     }
 
+    generateWelcome() {
+        if (this.state.username != '') {
+            return (
+                <Panel>
+                Welcome, {this.state.username}
+                </Panel>
+            );
+        }
+    }
+
     render() {
         const authenticated = this.state.authenticated;
         const view = this.state.currentView;
+        const welcomePanel = this.generateWelcome();
+            
         switch (view) {
             case 'grid':
                 return (
                     <div className="appContainer">
                     <Navigator
+                    homeActive={"true"}
                     switchGrid={() => this.switchGrid()}
                     switchContact={() => this.switchContact()}
                     switchSignin={() => this.switchSignin()}
                     />
+                    <div className="welcomeContainer">
+                    {welcomePanel}
+                    </div>
                     <SpotGrid/>
                     </div>
                 );
                 break;
             case 'contact':
-                if (this.state.username!='') {
                 return (
                     <div className="appContainer">
                     <Navigator
@@ -588,22 +691,12 @@ class App extends React.Component {
                     switchContact={() => this.switchContact()}
                     switchSignin={() => this.switchSignin()}
                     />
-                    <Contact/>
-                    </div>
-                );
-                }
-                else {
-                return (
-                    <div className="appContainer">
-                    <Navigator
-                    switchGrid={() => this.switchGrid()}
-                    switchContact={() => this.switchContact()}
-                    switchSignin={() => this.switchSignin()}
+                    <Contact switchSignin={() => this.switchSignin()}
+                    username={this.state.username}
+                    password={this.state.password}
                     />
-                    <PleaseLogIn switchSignIn={() => this.switchSignin()}/>
                     </div>
                 );
-                }
                 break;
             case 'signin':
                 return (
@@ -630,6 +723,7 @@ class App extends React.Component {
                 return (
                     <div className="appContainer">
                     <Navigator
+                    homeActive={"true"}
                     switchGrid={() => this.switchGrid()}
                     switchContact={() => this.switchContact()}
                     switchSignin={() => this.switchSignin()}
